@@ -1,0 +1,5 @@
+{
+  "name": "Deploy test SchoolConnect",
+  "description": "A lightweight, fast, and mobile-friendly web application for students to browse, search, and view school textbooks online without login or ads.",
+  "requestFramePermissions": []
+}
