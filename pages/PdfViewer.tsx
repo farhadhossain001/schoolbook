@@ -185,7 +185,9 @@ const PdfViewer: React.FC = () => {
 
   // --- Pinch Zoom ---
   const handleTouchStart = (e: React.TouchEvent) => {
+    // Only intercept if 2 fingers (pinch)
     if (e.touches.length === 2) {
+      e.preventDefault(); // Prevent native browser zoom/pan interference during pinch
       const dist = Math.hypot(e.touches[0].clientX - e.touches[1].clientX, e.touches[0].clientY - e.touches[1].clientY);
       touchStartRef.current = { dist, scale };
     } else {
@@ -200,7 +202,7 @@ const PdfViewer: React.FC = () => {
       const ratio = dist / touchStartRef.current.dist;
       // Use standard scale transform for smoothness during pinch
       contentRef.current.style.transform = `scale(${ratio})`;
-      // Center origin helps feel more natural during simple list zoom
+      // Center transform feels best during gesture
       contentRef.current.style.transformOrigin = 'center center';
       contentRef.current.style.transition = 'none';
     }
@@ -306,18 +308,24 @@ const PdfViewer: React.FC = () => {
 
       {/* Main Content Area */}
       <div 
-        className="flex-1 overflow-auto bg-slate-900 relative no-scrollbar"
+        className="flex-1 overflow-auto bg-slate-900 relative flex"
         ref={containerRef}
-        style={{ touchAction: 'none' }} // Crucial for gesture handling
+        // touch-action: pan-x pan-y Allows standard browser scrolling (panning) with one finger
+        // We only preventDefault when 2 fingers are detected for pinching
+        style={{ touchAction: 'pan-x pan-y' }} 
         onTouchStart={handleTouchStart}
         onTouchMove={handleTouchMove}
         onTouchEnd={handleTouchEnd}
         onTouchCancel={handleTouchEnd}
       >
-        {/* Centering Wrapper: min-h-full & flex ensures centering when small, w-fit & mx-auto allows scrolling when large */}
-        <div className="min-h-full min-w-full flex items-center justify-center p-4 sm:p-8 w-fit mx-auto">
+        {/* 
+            FIX: Use 'm-auto' on the inner container instead of 'justify-center items-center' on the parent.
+            This ensures content is centered when smaller than viewport, but accessible via scroll
+            (expanding right/down) when larger than viewport.
+        */}
+        <div className="m-auto p-4 sm:p-8 w-fit min-h-full flex items-center">
             {isLoading && (
-              <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 z-10 pointer-events-none">
+              <div className="absolute inset-0 flex flex-col items-center justify-center text-slate-400 z-10 pointer-events-none bg-slate-900/50 backdrop-blur-sm">
                  <div className="relative mb-4">
                     <Loader2 size={40} className="animate-spin text-indigo-500" />
                  </div>
@@ -336,7 +344,7 @@ const PdfViewer: React.FC = () => {
             )}
 
             {error ? (
-               <div className="flex flex-col items-center justify-center text-slate-400 max-w-sm text-center">
+               <div className="flex flex-col items-center justify-center text-slate-400 max-w-sm text-center mx-auto">
                   <AlertCircle size={48} className="text-red-400 mb-4" />
                   <h3 className="text-lg font-bold text-white mb-2">সমস্যা হয়েছে</h3>
                   <p className="text-sm mb-6 leading-relaxed text-slate-400">{error}</p>
